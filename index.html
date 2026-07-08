@@ -53,31 +53,19 @@ header{background:#0E1F0E;}
 <header>
   <div class="tape"></div>
   <div class="hinner">
-    <div class="site-title">
-      <span class="site-sub">// LIFE HACK ARCHIVE //</span>
-      人生<span class="hl">ライフハック</span>掲示板
-    </div>
+    <div class="site-title"><span class="site-sub">// LIFE HACK ARCHIVE //</span>人生<span class="hl">ライフハック</span>掲示板</div>
   </div>
 </header>
 <div class="page">
   <div class="form-wrap">
     <div class="form-head">💡 ライフハックを投稿する</div>
     <div class="form-body">
-      <div class="fg">
-        <label class="fl">ニックネーム</label>
-        <input class="fi" id="f-nick" type="text" placeholder="例：社会人10年目">
-      </div>
-      <div class="fg" style="margin-bottom:0.6rem;">
-        <label class="fl">ライフハック</label>
-        <textarea class="ft" id="f-ep" placeholder="人生で役立ったこと、知っておけばよかったこと、おすすめの方法など自由に書いてください。"></textarea>
-      </div>
+      <div class="fg"><label class="fl">ニックネーム</label><input class="fi" id="f-nick" type="text" placeholder="例：社会人10年目"></div>
+      <div class="fg" style="margin-bottom:0.6rem;"><label class="fl">ライフハック</label><textarea class="ft" id="f-ep" placeholder="人生で役立ったこと、知っておけばよかったこと、おすすめの方法など自由に書いてください。"></textarea></div>
       <button class="sub-btn" id="sub-btn" onclick="submitPost()">投稿する</button>
     </div>
   </div>
-  <div class="posts-head">
-    <span class="posts-label">みんなのライフハック</span>
-    <span class="badge" id="cnt">0</span>
-  </div>
+  <div class="posts-head"><span class="posts-label">みんなのライフハック</span><span class="badge" id="cnt">0</span></div>
   <div id="posts"><div class="loading">読み込み中...</div></div>
 </div>
 <div class="toast" id="toast"></div>
@@ -85,6 +73,9 @@ header{background:#0E1F0E;}
 const SUPABASE_URL='https://bujdylzpyefppgytjjru.supabase.co';
 const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ1amR5bHpweWVmcHBneXRqanJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5MjQzMDksImV4cCI6MjA5NjUwMDMwOX0.kiFqqtg5WBtKTv3J13cMW6lN7o3Q-JuVLDtwUDvIwp8';
 const H={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+SUPABASE_KEY,'Content-Type':'application/json'};
+function getVisitorId(){let id=localStorage.getItem('visitor_id');if(!id){id=crypto.randomUUID();localStorage.setItem('visitor_id',id);}return id;}
+async function trackQRAccess(){const params=new URLSearchParams(window.location.search);if(params.get('utm_source')!=='qr')return;await fetch(SUPABASE_URL+'/rest/v1/qr_access',{method:'POST',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify({site:'jinsei_lifehack',visitor_id:getVisitorId()})}).catch(()=>{});}
+trackQRAccess();
 loadPosts();
 async function loadPosts(){try{const res=await fetch(SUPABASE_URL+'/rest/v1/jinsei_lifehack?order=created_at.desc',{headers:H});render(await res.json());}catch(e){document.getElementById('posts').innerHTML='<div class="empty">読み込みに失敗しました。</div>';}}
 async function submitPost(){const nick=document.getElementById('f-nick').value.trim()||'匿名';const ep=document.getElementById('f-ep').value.trim();if(!ep){toast('⚠ ライフハックを入力してください');return;}const btn=document.getElementById('sub-btn');btn.disabled=true;btn.textContent='投稿中...';try{const res=await fetch(SUPABASE_URL+'/rest/v1/jinsei_lifehack',{method:'POST',headers:{...H,'Prefer':'return=representation'},body:JSON.stringify({nick,dest:'未指定',episode:ep})});if(!res.ok)throw new Error();document.getElementById('f-nick').value='';document.getElementById('f-ep').value='';await loadPosts();window.scrollTo({top:document.getElementById('posts').offsetTop-16,behavior:'smooth'});toast('✅ 投稿しました！');}catch(e){toast('⚠ 投稿に失敗しました。');}finally{btn.disabled=false;btn.textContent='投稿する';}}
